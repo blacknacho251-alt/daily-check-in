@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,15 +79,15 @@
             <nav class="flex flex-col gap-3">
                 <a href="#" class="glass p-5 flex items-center gap-4 bg-white/10 border-white/20 shadow-xl shadow-black/20">
                     <i class="fas fa-layer-group w-6 text-indigo-400"></i>
-                    <span class="font-semibold">&#x5DE5;&#x4F5C;&#x53F0;&#x4E3B;&#x9875;</span>
+                    <span class="font-semibold">Dashboard</span>
                 </a>
                 <button onclick="openSettings()" class="glass p-5 flex items-center gap-4 hover:bg-white/5 hover:border-white/30 transition-all text-left group">
                     <i class="fas fa-cog w-6 text-white/40 group-hover:text-indigo-400"></i>
-                    <span class="text-white/70">&#x914D;&#x7F6E;&#x5BC6;&#x94A5; (Token)</span>
+                    <span class="text-white/70">Settings (Token)</span>
                 </button>
                 <a href="https://github.com/blacknacho251-alt/daily-check-in/actions" target="_blank" class="glass p-5 flex items-center gap-4 hover:bg-white/5 hover:border-white/30 transition-all group">
                     <i class="fas fa-bolt w-6 text-white/40 group-hover:text-amber-400"></i>
-                    <span class="text-white/70">Actions &#x8FD0;&#x884C;&#x8BB0;&#x5F55;</span>
+                    <span class="text-white/70">Actions Log</span>
                 </a>
             </nav>
         </aside>
@@ -106,10 +106,10 @@
                 
                 <div class="flex flex-col sm:flex-row gap-8 w-full max-w-2xl">
                     <button id="btn-in" onclick="triggerAction('Clock In')" class="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white py-6 rounded-3xl font-black text-xl transition-all btn-glow-green flex items-center justify-center gap-4 shadow-2xl shadow-emerald-500/20 active:scale-95 disabled:opacity-50">
-                        <span id="label-in">&#x4E0A;&#x73ED;&#x6253;&#x5361; (In)</span>
+                        <span id="label-in">Clock In</span>
                     </button>
                     <button id="btn-out" onclick="triggerAction('Clock Out')" class="flex-1 bg-gradient-to-br from-slate-700 to-slate-800 text-white py-6 rounded-3xl font-black text-xl transition-all btn-glow-slate flex items-center justify-center gap-4 shadow-2xl shadow-black/40 active:scale-95 disabled:opacity-50">
-                        <span id="label-out">&#x4E0B;&#x73ED;&#x6253;&#x5361; (Out)</span>
+                        <span id="label-out">Clock Out</span>
                     </button>
                 </div>
             </section>
@@ -119,8 +119,9 @@
                 <h3 class="font-black text-xl mb-8 flex items-center justify-between">
                     <span class="flex items-center gap-3">
                         <span class="w-2 h-8 bg-indigo-500 rounded-full"></span>
-                        &#x6253;&#x5361;&#x52A8;&#x6001; (&#x5B9E;&#x65F6;)
+                        Live Activity
                     </span>
+                    <button onclick="loadData()" class="text-xs text-indigo-400 hover:underline">Refresh</button>
                 </h3>
                 <div class="overflow-x-auto">
                     <table class="w-full">
@@ -136,12 +137,13 @@
     <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-6">
         <div class="glass max-w-md w-full p-8">
             <h2 class="text-2xl font-black mb-6 flex items-center gap-3">
-                <i class="fas fa-key text-amber-400"></i> &#x5B89;&#x5168;&#x914D;&#x7F6E;
+                <i class="fas fa-key text-amber-400"></i> Setup Token
             </h2>
             <div class="space-y-6 text-sm">
                 <div>
                     <label class="block text-white/40 font-bold uppercase tracking-widest text-[10px] mb-2">GitHub Token</label>
                     <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none transition-all">
+                    <p class="mt-2 text-[10px] text-white/30">Tokens are saved locally and never uploaded. Scope: <b>repo</b>.</p>
                 </div>
                 <div class="flex gap-4">
                     <div class="flex-1">
@@ -155,7 +157,7 @@
                 </div>
             </div>
             <div class="mt-10">
-                <button onclick="saveSettings()" class="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-white/90 active:scale-95 transition-all">&#x4FDD;&#x7559;&#x5E76;&#x5173;&#x95ED;</button>
+                <button onclick="saveSettings()" class="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-white/90 active:scale-95 transition-all">Save & Close</button>
             </div>
         </div>
     </div>
@@ -163,18 +165,18 @@
     <div id="toast"></div>
 
     <script>
-        const OWNER = "blacknacho251-alt";
-        const REPO = "daily-check-in";
-        const WORKFLOW_ID = "clock.yml";
+        const OWNER = \"blacknacho251-alt\";
+        const REPO = \"daily-check-in\";
+        const WORKFLOW_ID = \"clock.yml\";
 
         function updateClock() {
             const now = new Date();
             const clock = document.getElementById('current-time');
-            if(clock) clock.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+            if(clock) clock.textContent = now.toLocaleTimeString('en-US', { hour12: false });
             const dateDisplay = document.getElementById('current-date');
             if(dateDisplay) {
                 const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-                dateDisplay.textContent = now.toLocaleDateString('zh-CN', options);
+                dateDisplay.textContent = now.toLocaleDateString('en-US', options);
             }
         }
         setInterval(updateClock, 1000);
@@ -188,13 +190,13 @@
             const token = document.getElementById('gh-token').value.trim();
             if (token) localStorage.setItem('gh_token', token);
             document.getElementById('settings-modal').classList.add('hidden');
-            showToast("\u914D\u7F6E\u4FDD\u5B58\u6210\u529F\uFF01", "#6366f1");
+            showToast(\"Settings saved successfully!\", \"#6366f1\");
         }
 
         async function triggerAction(actionType) {
             const token = localStorage.getItem('gh_token');
             if (!token) {
-                alert("\u8BF7\u5148\u914D\u7F6E GitHub Token\uFF01");
+                alert(\"Please configure your GitHub Token first!\");
                 openSettings();
                 return;
             }
@@ -202,7 +204,7 @@
             const label = actionType === 'Clock In' ? document.getElementById('label-in') : document.getElementById('label-out');
             const originalText = label.innerHTML;
             btn.disabled = true;
-            label.innerHTML = '<div class="loading-spinner"></div> \u6253\u5361\u4E2D...';
+            label.innerHTML = '<div class=\"loading-spinner\"></div> Processing...';
             try {
                 const url = `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_ID}/dispatches`;
                 const response = await fetch(url, {
@@ -211,26 +213,26 @@
                     body: JSON.stringify({ ref: 'main', inputs: { action: actionType } })
                 });
                 if (response.ok) {
-                    showToast(`\u2705 ${actionType} \u6307\u4EE4\u53D1\u9001\u6210\u529F\uFF01`);
+                    showToast(`✅ ${actionType} successful!`);
                     setTimeout(loadData, 5000);
                 } else {
                     const err = await response.json();
                     throw new Error(err.message || 'API Fail');
                 }
             } catch (err) {
-                alert(`\u274C \u6253\u5361\u5931\u8D25\uFF1A${err.message}`);
+                alert(`❌ Action failed: ${err.message}`);
             } finally {
                 btn.disabled = false;
                 label.innerHTML = originalText;
             }
         }
 
-        function showToast(msg, color = "#10b981") {
-            const t = document.getElementById("toast");
+        function showToast(msg, color = \"#10b981\") {
+            const t = document.getElementById(\"toast\");
             t.textContent = msg;
             t.style.backgroundColor = color;
-            t.className = "show";
-            setTimeout(() => { t.className = ""; }, 3000);
+            t.className = \"show\";
+            setTimeout(() => { t.className = \"\"; }, 3000);
         }
 
         async function loadData() {
@@ -238,15 +240,15 @@
                 const response = await fetch(`data/records.csv?t=${Date.now()}`);
                 if (!response.ok) return;
                 const text = await response.text();
-                const lines = text.trim().split('\n').slice(1).reverse();
+                const lines = text.trim().split('\\n').slice(1).reverse();
                 const table = document.getElementById('history-table');
                 table.innerHTML = '';
                 lines.slice(0, 10).forEach(line => {
                     const [ts, act] = line.split(',');
                     const row = document.createElement('tr');
-                    row.className = "border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors text-white/80";
+                    row.className = \"border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors text-white/80\";
                     const isIN = act.trim() === 'Clock In';
-                    row.innerHTML = `<td class="py-5 font-bold">${ts.split(' ')[1]}</td><td class="py-5 text-xs opacity-40">${ts.split(' ')[0]}</td><td class="py-5 text-right"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${isIN ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400'}">${act}</span></td>`;
+                    row.innerHTML = `<td class=\"py-5 font-bold\">\${ts.split(' ')[1]}</td><td class=\"py-5 text-xs opacity-40\">\${ts.split(' ')[0]}</td><td class=\"py-5 text-right\"><span class=\"px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest \${isIN ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400'}\">\${act}</span></td>`;
                     table.appendChild(row);
                 });
             } catch (e) {}
