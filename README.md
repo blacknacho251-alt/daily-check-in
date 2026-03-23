@@ -1,0 +1,1 @@
+# Daily Check-in\n\nGitHub Actions 驱动的上下班打卡项目。\n\n### 如何使用\n1. 点击仓库顶部的 **Actions** 选项卡。\n2. 在左侧选择 **Work Clock In/Out**。\n3. 点击 **Run workflow** 下拉菜单，选择打卡类型（Clock In 或 Clock Out）。\n4. 点击 **Run workflow** 按钮完成打卡。\n\n### 最近打卡记录\n| Timestamp | Action |\n| --- | --- |
