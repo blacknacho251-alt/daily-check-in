@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Check-in Dashboard</title>
+    <title>Daily Clock-In (API Mode)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -21,22 +21,45 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 1.5rem;
         }
-        .btn-glow-green:hover {
+        .btn-glow-green:hover:not(:disabled) {
             box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
             transform: translateY(-2px);
         }
-        .btn-glow-slate:hover {
+        .btn-glow-slate:hover:not(:disabled) {
             box-shadow: 0 0 25px rgba(71, 85, 105, 0.5);
             transform: translateY(-2px);
         }
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
         }
-        .animate-soft-pulse {
-            animation: pulse 3s infinite ease-in-out;
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #10b981;
+            color: #fff;
+            text-align: center;
+            border-radius: 12px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
     </style>
 </head>
 <body class="p-4 md:p-8 lg:p-12">
@@ -44,222 +67,222 @@
         <!-- Sidebar -->
         <aside class="w-full lg:w-72 flex flex-col gap-6">
             <div class="glass p-6 flex items-center gap-4 group">
-                <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+                <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
                     <i class="fas fa-clock-rotate-left text-2xl text-white"></i>
                 </div>
                 <div>
-                    <h1 class="font-black text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/50">ClockIn.io</h1>
-                    <p class="text-[10px] text-indigo-400 font-bold tracking-widest uppercase">Precision Tracking</p>
+                    <h1 class="font-black text-2xl tracking-tight">ClockIn.io</h1>
+                    <p class="text-[10px] text-indigo-400 font-bold tracking-widest uppercase">API Pro Mode</p>
                 </div>
             </div>
             
             <nav class="flex flex-col gap-3">
-                <a href="#" class="glass p-5 flex items-center gap-4 bg-white/10 border-white/20 shadow-xl shadow-black/20">
+                <a href="#" class="glass p-5 flex items-center gap-4 bg-white/10 border-white/20">
                     <i class="fas fa-layer-group w-6 text-indigo-400"></i>
-                    <span class="font-semibold">工作台主页</span>
+                    <span class="font-semibold">å·¥ä½å°ä¸»é¡µ</span>
                 </a>
+                <button onclick="openSettings()" class="glass p-5 flex items-center gap-4 hover:bg-white/5 hover:border-white/30 transition-all text-left">
+                    <i class="fas fa-cog w-6 text-white/40"></i>
+                    <span class="text-white/70">éç½®å¯é¥ (Token)</span>
+                </button>
                 <a href="https://github.com/blacknacho251-alt/daily-check-in/actions" target="_blank" class="glass p-5 flex items-center gap-4 hover:bg-white/5 hover:border-white/30 transition-all group">
                     <i class="fas fa-bolt w-6 text-white/40 group-hover:text-amber-400"></i>
-                    <span class="text-white/70">运行记录</span>
-                </a>
-                <a href="https://github.com/blacknacho251-alt/daily-check-in/blob/main/data/records.csv" target="_blank" class="glass p-5 flex items-center gap-4 hover:bg-white/5 hover:border-white/30 transition-all group">
-                    <i class="fas fa-database w-6 text-white/40 group-hover:text-emerald-400"></i>
-                    <span class="text-white/70">原始数据</span>
+                    <span class="text-white/70">Actions è¿è¡è®°å½</span>
                 </a>
             </nav>
 
             <div class="mt-auto glass p-6 hidden lg:block">
                 <p class="text-xs text-white/30 leading-relaxed italic">
-                    "Success is the sum of small efforts, repeated day in and day out."
+                    "Every click counts. Efficiency is the key."
                 </p>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col gap-8">
-            <!-- Hero Section with Clock -->
+            <!-- Hero Section -->
             <section class="glass p-12 flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[400px]">
-                <!-- Background Decoration -->
-                <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/10 blur-[100px] rounded-full"></div>
-                <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-600/10 blur-[100px] rounded-full"></div>
-
                 <div class="mb-2 px-4 py-1 glass border-indigo-500/30 text-[10px] font-bold tracking-[0.3em] uppercase text-indigo-400">
                     Current Time (Asia/Shanghai)
                 </div>
-                <div id="current-time" class="text-8xl md:text-9xl font-black mb-4 tracking-tighter drop-shadow-[0_10px_30px_rgba(255,255,255,0.15)] bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
+                <div id="current-time" class="text-8xl md:text-9xl font-black mb-4 tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
                     00:00:00
                 </div>
-                <div id="current-date" class="text-white/50 font-medium mb-16 text-lg tracking-wide">2026年3月23日 星期一</div>
+                <div id="current-date" class="text-white/50 font-medium mb-16 text-lg">2026å¹´3æ23æ¥ ææä¸</div>
                 
                 <div class="flex flex-col sm:flex-row gap-8 w-full max-w-2xl">
-                    <button onclick="triggerAction('Clock In')" class="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white py-6 rounded-3xl font-black text-xl transition-all btn-glow-green flex items-center justify-center gap-4 shadow-2xl shadow-emerald-500/20 active:scale-95 group">
-                        <i class="fas fa-play text-sm group-hover:translate-x-1 transition-transform"></i> 上班打卡 (In)
+                    <button id="btn-in" onclick="triggerAction('Clock In')" class="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white py-6 rounded-3xl font-black text-xl transition-all btn-glow-green flex items-center justify-center gap-4 shadow-2xl shadow-emerald-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="label-in">ä¸ç­æå¡ (In)</span>
                     </button>
-                    <button onclick="triggerAction('Clock Out')" class="flex-1 bg-gradient-to-br from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white py-6 rounded-3xl font-black text-xl transition-all btn-glow-slate flex items-center justify-center gap-4 shadow-2xl shadow-black/40 active:scale-95">
-                        <i class="fas fa-stop text-sm"></i> 下班打卡 (Out)
+                    <button id="btn-out" onclick="triggerAction('Clock Out')" class="flex-1 bg-gradient-to-br from-slate-700 to-slate-800 text-white py-6 rounded-3xl font-black text-xl transition-all btn-glow-slate flex items-center justify-center gap-4 shadow-2xl shadow-black/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="label-out">ä¸ç­æå¡ (Out)</span>
                     </button>
                 </div>
-                <div class="mt-8 flex items-center gap-2 text-white/30 text-xs font-medium bg-white/5 px-4 py-2 rounded-full border border-white/5">
-                    <i class="fas fa-shield-halved text-indigo-400"></i> Powered by GitHub Actions • 自动化执行
-                </div>
+                <p id="status-msg" class="mt-8 text-xs font-bold text-white/30 uppercase tracking-widest hidden"></p>
             </section>
 
-            <!-- Stats & History Grid -->
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                <!-- Left: History -->
-                <div class="xl:col-span-7 glass p-8">
-                    <div class="flex items-center justify-between mb-8">
-                        <h3 class="font-black text-xl flex items-center gap-3">
-                            <span class="w-2 h-8 bg-indigo-500 rounded-full"></span>
-                            最近打卡历史
-                        </h3>
-                        <span class="text-[10px] text-white/30 font-bold uppercase tracking-widest">Recent 10 entries</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <tbody id="history-table" class="space-y-4">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Right: Analytics -->
-                <div class="xl:col-span-5 flex flex-col gap-8">
-                    <div class="glass p-8 flex-1">
-                        <h3 class="font-black text-xl mb-8 flex items-center gap-3">
-                            <span class="w-2 h-8 bg-emerald-500 rounded-full"></span>
-                            本周活跃趋势
-                        </h3>
-                        <div class="h-[200px] w-full">
-                            <canvas id="workChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="glass p-6 group">
-                            <p class="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">平均工时</p>
-                            <p class="text-3xl font-black text-indigo-400 group-hover:scale-105 transition-transform origin-left">8.4h</p>
-                        </div>
-                        <div class="glass p-6 group">
-                            <p class="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">本月出勤</p>
-                            <p class="text-3xl font-black text-emerald-400 group-hover:scale-105 transition-transform origin-left">100%</p>
-                        </div>
-                    </div>
+            <!-- History Section -->
+            <div class="glass p-8 flex-1">
+                <h3 class="font-black text-xl mb-8 flex items-center justify-between">
+                    <span class="flex items-center gap-3">
+                        <span class="w-2 h-8 bg-indigo-500 rounded-full"></span>
+                        æå¡å¨æ (å®æ¶)
+                    </span>
+                    <button onclick="loadData()" class="text-xs text-indigo-400 hover:underline">å·æ°è®°å½</button>
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <tbody id="history-table" class="space-y-4">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="tip-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-6">
-        <div class="glass max-w-md w-full p-10 text-center">
-            <i class="fas fa-external-link-alt text-5xl text-indigo-400 mb-6"></i>
-            <h2 class="text-2xl font-black mb-4">即将打开 GitHub Actions</h2>
-            <p class="text-white/60 mb-8 leading-relaxed text-sm">
-                由于权限安全策略，打卡操作需要你在 GitHub 页面确认：<br>
-                <span class="text-white/80 font-bold">1. 点击 "Run workflow" 下拉框</span><br>
-                <span class="text-white/80 font-bold">2. 点击绿色的按钮开始打卡</span>
-            </p>
-            <button onclick="closeModalAndGo()" class="w-full bg-white text-black py-4 rounded-2xl font-bold hover:bg-white/90 transition-all">
-                好的，去打卡
-            </button>
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-6">
+        <div class="glass max-w-md w-full p-8">
+            <h2 class="text-2xl font-black mb-6 flex items-center gap-3">
+                <i class="fas fa-key text-amber-400"></i> å®å¨éç½®
+            </h2>
+            <div class="space-y-6 text-sm">
+                <div>
+                    <label class="block text-white/40 font-bold uppercase tracking-widest text-[10px] mb-2">GitHub Token (Classic PAT)</label>
+                    <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none transition-all">
+                    <p class="mt-2 text-[10px] text-white/30">å¯é¥ä¿å­å¨æµè§å¨æ¬å°ï¼ä¸ä¼ä¸ä¼ ãæééå¾éï¼repoã</p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-white/40 font-bold uppercase tracking-widest text-[10px] mb-2">Owner</label>
+                        <input type="text" id="gh-owner" value="blacknacho251-alt" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none opacity-50 cursor-not-allowed" readonly>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-white/40 font-bold uppercase tracking-widest text-[10px] mb-2">Repo</label>
+                        <input type="text" id="gh-repo" value="daily-check-in" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none opacity-50 cursor-not-allowed" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-10 flex gap-4">
+                <button onclick="saveSettings()" class="flex-1 bg-white text-black font-black py-4 rounded-2xl hover:bg-white/90 active:scale-95 transition-all">ä¿å­å¹¶å³é­</button>
+            </div>
         </div>
     </div>
 
+    <!-- Toast Notification -->
+    <div id="toast">â æå¡æä»¤åéæåï¼</div>
+
     <script>
+        // CONFIG
+        const OWNER = "blacknacho251-alt";
+        const REPO = "daily-check-in";
+        const WORKFLOW_ID = "clock.yml";
+
+        // Clock
         function updateClock() {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
-            const clock = document.getElementById('current-time');
-            if(clock) clock.textContent = timeStr;
-            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-            const dateDisplay = document.getElementById('current-date');
-            if(dateDisplay) dateDisplay.textContent = now.toLocaleDateString('zh-CN', options);
+            document.getElementById('current-time').textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+            document.getElementById('current-date').textContent = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        function triggerAction(type) {
-            document.getElementById('tip-modal').classList.remove('hidden');
+        // Settings
+        function openSettings() {
+            document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+        function saveSettings() {
+            const token = document.getElementById('gh-token').value.trim();
+            if (token) localStorage.setItem('gh_token', token);
+            document.getElementById('settings-modal').classList.add('hidden');
+            showToast("â éç½®ä¿å­æåï¼", "#6366f1");
         }
 
-        function closeModalAndGo() {
-            document.getElementById('tip-modal').classList.add('hidden');
-            const url = `https://github.com/blacknacho251-alt/daily-check-in/actions/workflows/clock.yml`;
-            window.open(url, '_blank');
+        // Trigger Action (API Mode)
+        async function triggerAction(actionType) {
+            const token = localStorage.getItem('gh_token');
+            if (!token) {
+                alert("è¯·åç¹å»å·¦ä¾§ãéç½®å¯é¥ãæé®ï¼å¡«åä½ ç GitHub Tokenï¼");
+                openSettings();
+                return;
+            }
+
+            const btn = actionType === 'Clock In' ? document.getElementById('btn-in') : document.getElementById('btn-out');
+            const label = actionType === 'Clock In' ? document.getElementById('label-in') : document.getElementById('label-out');
+            const originalLabel = label.innerHTML;
+
+            // UI Feedback
+            btn.disabled = true;
+            label.innerHTML = '<div class="loading-spinner"></div> æå¡ä¸­...';
+            
+            try {
+                const url = `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_ID}/dispatches`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                    },
+                    body: JSON.stringify({
+                        ref: 'main',
+                        inputs: { action: actionType }
+                    })
+                });
+
+                if (response.ok) {
+                    showToast(`â ${actionType} æä»¤åéæåï¼æ°æ®æ­£å¨å¥åº...`);
+                    // Wait a bit and refresh data
+                    setTimeout(loadData, 5000);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'API è¯·æ±å¤±è´¥');
+                }
+            } catch (err) {
+                console.error(err);
+                alert(`â æå¡å¤±è´¥ï¼${err.message}\nè¯·æ£æ¥ Token æéæç½ç»ã`);
+            } finally {
+                btn.disabled = false;
+                label.innerHTML = originalLabel;
+            }
         }
 
+        function showToast(msg, color = "#10b981") {
+            const t = document.getElementById("toast");
+            t.textContent = msg;
+            t.style.backgroundColor = color;
+            t.className = "show";
+            setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+        }
+
+        // Load Data
         async function loadData() {
             try {
-                const response = await fetch('data/records.csv');
-                if (!response.ok) throw new Error('CSV not found');
-                const csvText = await response.text();
-                const lines = csvText.trim().split('\n').slice(1).reverse();
+                const response = await fetch(`data/records.csv?t=${Date.now()}`);
+                if (!response.ok) return;
+                const text = await response.text();
+                const lines = text.trim().split('\n').slice(1).reverse();
+                const table = document.getElementById('history-table');
+                table.innerHTML = '';
                 
-                const tableBody = document.getElementById('history-table');
-                tableBody.innerHTML = '';
-                
-                if (lines.length === 0) {
-                    tableBody.innerHTML = '<tr><td class="text-white/30 text-sm py-4 italic">暂无打卡记录...</td></tr>';
-                }
-
                 lines.slice(0, 10).forEach(line => {
-                    const [timestamp, action] = line.split(',');
+                    const [ts, act] = line.split(',');
                     const row = document.createElement('tr');
-                    row.className = "group border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors";
-                    const timeOnly = timestamp ? timestamp.split(' ')[1] : '--';
-                    const dateOnly = timestamp ? timestamp.split(' ')[0] : '--';
+                    row.className = "border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors";
+                    const isIN = act.trim() === 'Clock In';
                     row.innerHTML = `
-                        <td class="py-5">
-                            <div class="flex flex-col">
-                                <span class="font-bold text-lg text-white">${timeOnly}</span>
-                                <span class="text-[10px] text-white/30 font-bold tracking-tighter">${dateOnly}</span>
-                            </div>
-                        </td>
-                        <td class="py-5">
-                            <div class="flex items-center gap-3">
-                                <div class="w-2 h-2 rounded-full ${action.trim() === 'Clock In' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-500'}"></div>
-                                <span class="text-sm font-black uppercase tracking-widest ${action.trim() === 'Clock In' ? 'text-emerald-400' : 'text-slate-400'}">
-                                    ${action}
-                                </span>
-                            </div>
+                        <td class="py-5 font-bold text-lg text-white/80">${ts.split(' ')[1]}</td>
+                        <td class="py-5 text-xs text-white/30 font-medium">${ts.split(' ')[0]}</td>
+                        <td class="py-5 text-right">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${isIN ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400'}">
+                                ${act}
+                            </span>
                         </td>
                     `;
-                    tableBody.appendChild(row);
+                    table.appendChild(row);
                 });
-
-                const ctx = document.getElementById('workChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                        datasets: [{
-                            label: 'Hours',
-                            data: [8.2, 8.5, 9.1, 8.8, 7.9, 0, 0],
-                            borderColor: '#818cf8',
-                            borderWidth: 4,
-                            pointRadius: 0,
-                            pointHoverRadius: 6,
-                            tension: 0.4,
-                            fill: true,
-                            backgroundColor: 'rgba(129, 140, 248, 0.1)'
-                        }]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { display: false, min: 0, max: 12 },
-                            x: { 
-                                grid: { display: false }, 
-                                border: { display: false },
-                                ticks: { color: 'rgba(255,255,255,0.2)', font: { size: 10, weight: 'bold' } } 
-                            }
-                        }
-                    }
-                });
-            } catch (e) {
-                console.error("Error loading CSV:", e);
-            }
+            } catch (e) {}
         }
         loadData();
     </script>
